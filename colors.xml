@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light, moderate sage. Keep in sync with the bg token in assets/www/index.html. -->
+    <color name="app_bg">#D6E6DF</color>
+    <color name="ic_background">#0B6E78</color>
+</resources>

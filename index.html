@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#D6E6DF">
+<title>My Fitness Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Android build. Layout: sticky masthead with a scrolling tab strip, one content column.
+   Background is a light-moderate sage so white cards stand out; amber = energy in, teal = energy out.
+   This build is light only. */
+:root{
+  --font-display:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --bg:#D6E6DF; --surface:#FFFFFF; --inset:#F0F6F4;
+  --ink:#0D2230; --ink2:#3A5260; --muted:#4A6070;
+  --line:#C5D8D0; --line2:#AFC5BC;
+  --in:#C97200; --out:#00939E; --bmr:#7CC8CE; --water:#3A86C8;
+  --accent:#0B6E78; --on-accent:#FFFFFF;
+  --good:#1B7A3B; --good-bg:#DDF0E4; --warn:#8F5A00; --warn-bg:#FBEFD5; --bad:#B3261E; --bad-bg:#FBE3E1;
+  color-scheme:light;
+}
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+img{max-width:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* masthead */
+.mast{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.mast-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;padding-top:12px}
+.brand{font:700 26px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+.savestate{font-size:12px;color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-top:6px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:10px 14px 8px;border:0;border-bottom:3px solid transparent;background:none;cursor:pointer;font:600 18px/1.2 var(--font-display);letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+main{padding-block:20px 56px;display:flex;flex-direction:column;gap:16px}
+.banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:12px 14px;border:1px solid var(--line2);border-radius:8px;background:var(--inset);color:var(--ink2)}
+.banner p{flex:1 1 280px;min-width:0}
+.banner b{color:var(--ink)}
+
+/* type */
+h2{font:600 30px/1.05 var(--font-display);letter-spacing:.01em;text-wrap:balance}
+h3{font:600 20px/1.15 var(--font-display);letter-spacing:.02em;text-wrap:balance}
+.lbl{font:600 13px/1.2 var(--font-display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:13px;color:var(--muted);max-width:62ch}
+.fine{font-size:12px;color:var(--muted)}
+.big{font:700 52px/1 var(--font-display);letter-spacing:.01em}
+.mid{font:700 34px/1 var(--font-display)}
+.u{font:500 15px var(--font-body);color:var(--muted);margin-left:6px}
+.lead{max-width:62ch;color:var(--ink2)}
+
+/* surfaces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:16px}
+@media (max-width:820px){.split{grid-template-columns:minmax(0,1fr)}}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.row.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:1px solid var(--accent);border-radius:6px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer;line-height:1.2}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line2)}
+.btn.ghost:hover{border-color:var(--ink2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.link{border:0;background:none;color:var(--accent);padding:4px 0;font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:12px}
+.num{display:flex;align-items:baseline;gap:6px;border:1px solid var(--line2);border-radius:6px;background:var(--inset);padding:2px 12px 2px 4px}
+.num:focus-within{border-color:var(--accent)}
+.num input{flex:1;min-width:0;border:0;background:transparent;padding:8px;font:600 24px/1.2 var(--font-display);outline:0}
+.num .u{margin:0}
+.txt,select.txt,input.txt{width:100%;border:1px solid var(--line2);border-radius:6px;background:var(--inset);padding:9px 10px;min-width:0}
+.txt:focus{outline:0;border-color:var(--accent)}
+input[type=date].txt{width:auto}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;background:var(--inset)}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:9px 16px;font-weight:600;color:var(--ink2)}
+.seg label+label span{border-left:1px solid var(--line2)}
+.seg input:checked+span{background:var(--accent);color:var(--on-accent)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-2px}
+.datebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.datebar .btn{padding:8px 12px}
+
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;background:var(--inset);border:1px solid var(--line);color:var(--ink2);font-size:12px;font-weight:600;white-space:nowrap}
+.chip.good{background:var(--good-bg);border-color:transparent;color:var(--good)}
+.chip.warn{background:var(--warn-bg);border-color:transparent;color:var(--warn)}
+.chip.bad{background:var(--bad-bg);border-color:transparent;color:var(--bad)}
+.note{padding:10px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn);font-size:13px}
+.note.bad{background:var(--bad-bg);color:var(--bad)}
+.note.plain{background:var(--inset);color:var(--ink2)}
+
+/* ledger */
+.hero-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.hero-row .big{font-size:60px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:76px minmax(0,1fr) 64px;align-items:center;gap:10px}
+.bar-row .name{display:flex;align-items:center;gap:8px;font-weight:600}
+.bar-row .val{text-align:right;font:600 20px var(--font-display)}
+.track{display:flex;gap:2px;height:20px}
+.seg-in,.seg-bmr,.seg-act{height:100%;min-width:0}
+.seg-in{background:var(--in);border-radius:0 4px 4px 0}
+.seg-bmr{background:var(--bmr)}
+.seg-act{background:var(--out);border-radius:0 4px 4px 0}
+.seg-bmr:last-child{border-radius:0 4px 4px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.dot.in{background:var(--in)}.dot.out{background:var(--out)}.dot.bmr{background:var(--bmr)}
+.parts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink2)}
+.parts span{display:inline-flex;align-items:center;gap:6px}
+.meter{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.meter>span{display:block;height:100%;border-radius:5px;background:var(--accent)}
+.meter.warn>span{background:var(--in)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair .mid{margin-top:2px}
+
+/* chart */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart text{font-family:var(--font-display);fill:var(--muted);font-size:13px}
+.chart .val{fill:var(--ink);font-weight:600;font-size:13px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--line2);stroke-width:1}
+.chart .bg{fill:var(--inset);opacity:0}
+.chart .band:hover .bg,.chart .band:focus .bg{opacity:1}
+.chart .band{outline:0}
+.chart .in{fill:var(--in)}.chart .out{fill:var(--out)}.chart .bmr{fill:var(--bmr)}
+.chart .hit{fill:transparent}
+.tableview summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px}
+.tblwrap{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font:600 12px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tip{position:fixed;z-index:50;pointer-events:none;max-width:260px;padding:9px 11px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.tip-title{font-weight:600;margin-bottom:4px}
+.tip-row{display:flex;align-items:center;gap:8px}
+.tip-row b{font:600 15px var(--font-display);min-width:3.2em}
+.tip-row i.key{display:inline-block;width:10px;height:3px;border-radius:2px;flex:none}
+.tip-row i.in{background:var(--in)}.tip-row i.out{background:var(--out)}.tip-row i.bmr{background:var(--bmr)}
+
+/* scale */
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.scale div{height:10px;background:var(--line2)}
+.scale div.on{background:var(--accent)}
+.scale-lbl{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;font-size:11px;color:var(--muted);margin-top:4px}
+.scale-lbl span.on{color:var(--ink);font-weight:600}
+
+/* meals */
+.meal{display:flex;flex-direction:column;gap:12px}
+.meal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.kc{display:flex;align-items:baseline;gap:4px}
+.kc input{width:5.4em;text-align:right;border:1px solid var(--line2);border-radius:6px;background:var(--inset);padding:4px 8px;font:700 22px/1.2 var(--font-display)}
+.kc input:focus{outline:0;border-color:var(--accent)}
+.meal-body{display:flex;gap:12px;align-items:flex-start}
+.thumb{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line);flex:none;background:var(--inset)}
+.meal-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.status{min-height:0;font-size:13px;color:var(--ink2)}
+.status.err{color:var(--bad)}
+.macro{display:grid;grid-template-columns:78px minmax(0,1fr) 92px;align-items:center;gap:10px;font-size:13px}
+.macro .meter{height:8px;background:var(--line)}
+.macro .meter>span{background:var(--ink2)}
+.macro b{font:600 16px var(--font-display)}
+.macro .r{text-align:right;color:var(--ink2)}
+.micros{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:6px 18px}
+.micro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;font-size:13px}
+.micro .meter{grid-column:1/-1;height:5px;background:var(--line)}
+.micro .meter>span{background:var(--ink2)}
+.micro .a{color:var(--ink2)}
+.nutri{display:flex;flex-direction:column;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.nutri summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px}
+.items{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink2)}
+.glasses{display:flex;flex-wrap:wrap;gap:6px}
+.glass{border:0;background:none;padding:2px;cursor:pointer;line-height:0}
+.glass svg{width:30px;height:42px;display:block}
+.glass .cup{fill:none;stroke:var(--line2);stroke-width:1.6}
+.glass .wat{fill:var(--water);opacity:0}
+.glass.on .wat{opacity:1}
+.glass.on .cup{stroke:var(--water)}
+
+/* activity + health */
+.wlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.wlist li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.wlist li:first-child{border-top:0}
+.wlist .sub{font-size:12px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px}
+.kv dt{color:var(--ink2)}
+.kv dd{margin:0;text-align:right;font:600 18px var(--font-display)}
+.kv .total{border-top:1px solid var(--line2);padding-top:8px;font-size:22px}
+.tile{display:flex;flex-direction:column;gap:10px}
+.tile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tile-fields{display:flex;gap:8px;align-items:center}
+.tile-fields .num{flex:1;min-width:0}
+.spark{min-height:44px}
+.spark svg{display:block;width:100%;max-width:200px;height:auto;overflow:visible}
+.spark .ln{fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spark .end{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.spark .hit{fill:transparent}
+.spark-empty{font-size:12px;color:var(--muted)}
+.src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;align-items:end}
+
+/* advice */
+.opt{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.opt ul{margin:0;padding-left:18px;color:var(--ink2)}
+.opt li+li{margin-top:4px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px 24px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.empty{padding:28px 8px;text-align:center;color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="mast">
+  <div class="wrap">
+    <div class="mast-top">
+      <h1 class="brand">My Fitness Monitor</h1>
+      <span class="savestate" id="savestate" aria-live="polite"></span>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="progress">Progress</button>
+      <button class="tab" role="tab" data-tab="profile">Personal info</button>
+      <button class="tab" role="tab" data-tab="target">Target</button>
+      <button class="tab" role="tab" data-tab="meals">Meals</button>
+      <button class="tab" role="tab" data-tab="activity">Activity</button>
+      <button class="tab" role="tab" data-tab="health">Health</button>
+      <button class="tab" role="tab" data-tab="settings">Settings</button>
+    </nav>
+  </div>
+</div>
+<main class="wrap" id="view"><div class="empty">Loading your log…</div></main>
+<div class="tip" id="tip" hidden role="tooltip"></div>
+<input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+<input type="file" id="fileGal" accept="image/*" hidden>
+<input type="file" id="fileImp" accept=".csv,.json,text/csv,application/json" hidden>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= helpers ================= */
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:NaN};
+const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+const nf=(n,d)=>Number.isFinite(n)?n.toLocaleString(undefined,{minimumFractionDigits:d||0,maximumFractionDigits:d||0}):'–';
+const signed=n=>(n>0?'+':n<0?'−':'')+nf(Math.abs(n));
+const r1=n=>Math.round(n*10)/10;
+const clone=o=>JSON.parse(JSON.stringify(o));
+const mean=(a,k)=>a.reduce((s,x)=>s+x[k],0)/a.length;
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD=s=>{const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const todayStr=()=>ymd(new Date());
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diffDays=(a,b)=>Math.round((parseD(b)-parseD(a))/86400000);
+const shortDate=s=>parseD(s).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+const fullDate=s=>parseD(s).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+
+/* ================= constants ================= */
+const KCAL_PER_KG=7700, STEP_GOAL=10000, GLASS_ML=250, GLASS_GOAL=8;
+const SLOTS=[['breakfast','Breakfast'],['morning','Morning snack'],['brunch','Brunch'],['lunch','Lunch'],['evening','Evening snack'],['dinner','Dinner']];
+const SLOT_LABEL=Object.fromEntries(SLOTS);
+const MICROS=[['na','Sodium','mg',2300],['k','Potassium','mg',4700],['ca','Calcium','mg',1300],['fe','Iron','mg',18],['mg','Magnesium','mg',420],['zn','Zinc','mg',11],['vitA','Vitamin A','mcg',900],['vitC','Vitamin C','mg',90],['vitD','Vitamin D','mcg',20],['b12','Vitamin B12','mcg',2.4],['fol','Folate','mcg',400]];
+const MET={'Walking (brisk)':4.3,'Jogging':7,'Running':9.8,'Cycling':7.5,'Swimming':6,'Yoga':2.8,'Strength training':5,'HIIT / circuit':8,'Dance / Zumba':5.5,'Badminton':5.5,'Cricket':4.8,'Football':7,'Stair climbing':8.8,'Hiking':6,'Skipping rope':11,'Other activity':4};
+const INTENSITY={light:.8,moderate:1,vigorous:1.2};
+const SOURCES=[
+ ['Phone health platforms',['Apple Health','Google Health Connect / Google Fit','Samsung Health']],
+ ['Smartwatches and bands',['Apple Watch','Fitbit','Garmin','Samsung Galaxy Watch','Google Pixel Watch','Amazfit / Zepp','Xiaomi Mi Band / Mi Fitness','Huawei Health','Polar','Suunto','Coros','Withings','Noise / NoiseFit','boAt Crest / boAt Wave','Fire-Boltt']],
+ ['Rings and recovery trackers',['Oura Ring','Whoop','Ultrahuman Ring']],
+ ['Fitness and food apps',['Strava','MyFitnessPal','Nike Run Club','Peloton','Cult.fit','HealthifyMe']],
+ ['Other',['Manual entry (no device)']]
+];
+const DEF_PROFILE={gender:'male',age:30,height:175,weight:80};
+
+/* ================= state + storage ================= */
+let S=null;
+const ui={tab:'progress',date:todayStr(),meal:{},advice:{busy:false,msg:'',ctl:null},imp:'',chartTable:false};
+const pending={};
+const AI={sample:null,imagesOK:false};
+const store={mode:'memory',col:null,timers:new Map(),chains:new Map()};
+const LSP='fitnessMonitor:';
+const lsGet=k=>{try{return localStorage.getItem(LSP+k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(LSP+k,v);return true}catch(e){return false}};
+const lsDel=k=>{try{localStorage.removeItem(LSP+k)}catch(e){}};
+const lsKeys=()=>{try{const o=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(LSP)===0)o.push(k.slice(LSP.length))}return o}catch(e){return[]}};
+const withTimeout=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(null),ms))]);
+
+function setStatus(kind){
+  const el=$('#savestate'); if(!el) return;
+  el.textContent={saving:'Saving…',saved:'Saved on this phone','saved-local':'Saved on this phone',memory:'Not saved: storage is blocked',error:'Could not save. Your changes are still on screen.',full:'Storage is full. Delete older days to keep saving.'}[kind]||'';
+}
+async function initStore(){
+  try{localStorage.setItem(LSP+'probe','1');localStorage.removeItem(LSP+'probe');store.mode='local'}catch(e){store.mode='memory'}
+}
+async function loadAll(){
+  const out={settings:null,days:{}};
+  try{
+    if(store.mode==='db'){
+      const snap=await store.col.limit(1000).get();
+      snap.docs.forEach(d=>{
+        if(!d.exists)return;
+        if(d.id==='settings')out.settings=clone(d.data());
+        else if(d.id.indexOf('d_')===0)out.days[d.id.slice(2)]=clone(d.data());
+      });
+    }else if(store.mode==='local'){
+      lsKeys().forEach(k=>{
+        const raw=lsGet(k); if(!raw)return;
+        try{const data=JSON.parse(raw);if(k==='settings')out.settings=data;else if(k.indexOf('d_')===0)out.days[k.slice(2)]=data}catch(e){}
+      });
+    }
+  }catch(e){}
+  return out;
+}
+function docFor(key){return key==='settings'?S.settings:S.days[key.slice(2)]}
+function queueSave(key){
+  setStatus('saving');
+  clearTimeout(store.timers.get(key));
+  store.timers.set(key,setTimeout(()=>{
+    const prev=store.chains.get(key)||Promise.resolve();
+    store.chains.set(key,prev.then(()=>writeDoc(key)).catch(()=>{}));
+  },600));
+}
+async function writeDoc(key){
+  const data=docFor(key);
+  if(store.mode==='memory'){setStatus('memory');return}
+  if(data===undefined){
+    try{if(store.mode==='db')await store.col.doc(key).delete();else lsDel(key);setStatus(store.mode==='db'?'saved':'saved-local')}catch(e){setStatus('error')}
+    return;
+  }
+  const body=clone(data);
+  if(store.mode==='db'){
+    for(let tries=0;tries<2;tries++){
+      try{await store.col.doc(key).set(body);setStatus('saved');return}
+      catch(e){
+        if(e&&e.code==='unavailable'&&tries===0){await new Promise(r=>setTimeout(r,800));continue}
+        setStatus(e&&e.code==='quota_exceeded'?'full':'error');return;
+      }
+    }
+  }else{
+    setStatus(lsSet(key,JSON.stringify(body))?'saved-local':'error');
+  }
+}
+function getDay(date,create){
+  let d=S.days[date];
+  if(!d&&create){d=S.days[date]={meals:{},water:0,steps:null,workouts:[],health:{},src:{}}}
+  if(d){d.meals=d.meals||{};d.workouts=d.workouts||[];d.health=d.health||{};d.src=d.src||{}}
+  return d;
+}
+function touch(date){const d=getDay(date,true);d.sample=false;queueSave('d_'+date);return d}
+
+/* ================= AI through the Anthropic API (own key) ================= */
+const getKey=()=>lsGet('apikey')||'';
+const getModel=()=>lsGet('model')||'claude-sonnet-5-5';
+function blobToBase64(b){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.onerror=()=>rej(new Error('read'));fr.readAsDataURL(b)})}
+function parseLoose(text){
+  const t=String(text||'').trim();
+  try{return JSON.parse(t)}catch(e){}
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(f){try{return JSON.parse(f[1])}catch(e){}}
+  const a=t.search(/[\[{]/),z=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));
+  if(a>=0&&z>a){try{return JSON.parse(t.slice(a,z+1))}catch(e){}}
+  throw {code:'invalid_json'};
+}
+async function callClaude(prompt,opts,maxTokens){
+  const key=getKey();
+  if(!key)throw {code:'no_key'};
+  const content=[];
+  if(opts&&opts.images){
+    const imgs=Array.isArray(opts.images)?opts.images:[opts.images];
+    for(const b of imgs)content.push({type:'image',source:{type:'base64',media_type:b.type||'image/jpeg',data:await blobToBase64(b)}});
+  }
+  content.push({type:'text',text:prompt});
+  let res;
+  try{
+    res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:opts&&opts.signal,
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:getModel(),max_tokens:maxTokens||2000,messages:[{role:'user',content}]})});
+  }catch(e){
+    if(e&&e.name==='AbortError')throw {code:'cancelled'};
+    throw {code:'offline'};
+  }
+  if(!res.ok){
+    throw {code:res.status===401||res.status===403?'bad_key':res.status===429?'rate_limited':res.status===404?'bad_model':'upstream_error'};
+  }
+  const data=await res.json();
+  const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  if(data.stop_reason==='max_tokens')throw {code:'invalid_json',text};
+  return text;
+}
+function makeShim(){
+  const f=async(prompt,opts)=>({text:await callClaude(prompt,opts),truncated:false});
+  f.json=async(prompt,opts)=>parseLoose(await callClaude(prompt,opts));
+  f.limits=async()=>({images:{maxCount:1,mediaTypes:['image/jpeg','image/png','image/webp']}});
+  return f;
+}
+async function setupAI(){AI.sample=getKey()?makeShim():null;AI.imagesOK=!!AI.sample}
+
+/* ================= sample data ================= */
+function seedSample(){
+  const t=todayStr();
+  const base={
+    breakfast:['Masala omelette (2 eggs) with toast',380,20,32,18,3,4],
+    morning:['Banana and a handful of almonds',160,5,22,6,4,13],
+    brunch:['Poha with peanuts and curd',280,8,44,8,4,6],
+    lunch:['Dal, rice, mixed vegetable sabzi and curd',560,20,86,14,9,8],
+    evening:['Roasted chana and masala tea',150,7,20,4,6,6],
+    dinner:['Two rotis with paneer bhurji and salad',480,24,44,22,8,6]
+  };
+  const dens={na:1.1,k:.8,ca:.32,fe:.0075,mg:.1,zn:.011,vitA:.35,vitC:.05,vitD:.012,b12:.0017,fol:.28};
+  const mk=(slot,f)=>{
+    const b=base[slot],k=Math.round(b[1]*f),micros={};
+    Object.keys(dens).forEach(key=>{micros[key]=r1(dens[key]*k)});
+    return {desc:b[0],dish:b[0],kcal:k,p:r1(b[2]*f),c:r1(b[3]*f),f:r1(b[4]*f),fib:r1(b[5]*f),sug:r1(b[6]*f),micros,items:[],conf:'example',notes:'Example entry. Analyze your own meal to replace it.',ai:true};
+  };
+  const plan=[
+    {slots:['breakfast','morning','lunch'],f:1,steps:4200,wo:[],w:3,h:{sleep:6.8,stress:5,rhr:64,ahr:78,spo2:97,hrv:41,sys:118,dia:76}},
+    {slots:['breakfast','morning','lunch','evening','dinner'],f:1.04,steps:7300,wo:[['Walking (brisk)',35,'moderate']],w:7,h:{sleep:6.5,stress:5,rhr:64,ahr:80,spo2:97,hrv:42,sys:120,dia:78}},
+    {slots:['breakfast','brunch','lunch','evening','dinner'],f:.97,steps:9100,wo:[],w:8,h:{sleep:7.2,stress:4,rhr:62,ahr:76,spo2:98,hrv:45,sys:119,dia:77}},
+    {slots:['breakfast','morning','lunch','evening','dinner'],f:1.08,steps:5400,wo:[['Cycling',30,'moderate']],w:6,h:{sleep:5.9,stress:7,rhr:66,ahr:84,spo2:96,hrv:38,sys:124,dia:80}},
+    {slots:['breakfast','morning','lunch','evening','dinner'],f:1.02,steps:8200,wo:[],w:7,h:{sleep:7,stress:4,rhr:63,ahr:77,spo2:97,hrv:44,sys:118,dia:76}}
+  ];
+  const days={};
+  plan.forEach((p,i)=>{
+    const meals={};p.slots.forEach(s=>{meals[s]=mk(s,p.f)});
+    days[addDays(t,-i)]={meals,water:p.w,steps:p.steps,workouts:p.wo.map((w,j)=>({id:'ex'+i+j,type:w[0],minutes:w[1],intensity:w[2]})),health:p.h,src:{},sample:true};
+  });
+  return days;
+}
+function defaultSettings(){
+  return {v:1,profile:clone(DEF_PROFILE),target:{weight:72,amount:12,unit:'weeks',start:todayStr()},source:'',mine:false,advice:null};
+}
+
+/* ================= calculations ================= */
+function profileOK(p){return !!p&&p.age>=18&&p.age<=100&&p.height>=100&&p.height<=230&&p.weight>=30&&p.weight<=300}
+function targetOK(){const t=S.settings.target;return !!t&&t.weight>=30&&t.weight<=300&&t.amount>0}
+function bmr(p){const b=10*p.weight+6.25*p.height-5*p.age;return p.gender==='male'?b+5:p.gender==='female'?b-161:b-78}
+function bmi(p){const m=p.height/100;return p.weight/(m*m)}
+function bmiBand(b){return b<18.5?0:b<25?1:b<30?2:3}
+const BMI_BANDS=[['Under 18.5','Underweight'],['18.5–24.9','Healthy range'],['25–29.9','Overweight'],['30 and over','Obese']];
+function stepKcal(steps,p){const km=(steps||0)*(p.height*0.415/100)/1000;return 0.5*p.weight*km}
+function stepKm(steps,p){return (steps||0)*(p.height*0.415/100)/1000}
+function workoutKcal(w,p){
+  if(w.deviceKcal>0)return w.deviceKcal;
+  const met=MET[w.type]||4;
+  return Math.max(0,(met-1))*p.weight*((w.minutes||0)/60)*(INTENSITY[w.intensity]||1);
+}
+const mealKcal=m=>m&&m.kcal>0?Number(m.kcal):0;
+function calcDay(date){
+  const p=S.settings.profile,d=S.days[date]||{meals:{},workouts:[]};
+  const meals=d.meals||{};
+  const slotsLogged=SLOTS.filter(s=>mealKcal(meals[s[0]])>0).length;
+  const intake=SLOTS.reduce((a,s)=>a+mealKcal(meals[s[0]]),0);
+  const steps=Number(d.steps)||0,stepK=stepKcal(steps,p);
+  const workK=(d.workouts||[]).reduce((a,w)=>a+workoutKcal(w,p),0);
+  const b=bmr(p);
+  return {date,intake,slotsLogged,steps,stepK,workK,active:stepK+workK,bmr:b,burn:b+stepK+workK,balance:b+stepK+workK-intake};
+}
+function basisDays(){
+  const t=todayStr(),out=[];
+  for(let i=0;i<7;i++){
+    const c=calcDay(addDays(t,-i));
+    if(i===0?c.slotsLogged>=5:c.slotsLogged>=3)out.push(c);
+  }
+  return out;
+}
+function targetInfo(){
+  const p=S.settings.profile,t=S.settings.target;
+  const days=t.unit==='weeks'?t.amount*7:t.unit==='months'?Math.round(t.amount*30.44):t.amount;
+  const deadline=addDays(t.start||todayStr(),Math.round(days||0));
+  const today=todayStr(),remaining=diffDays(today,deadline);
+  const diff=p.weight-t.weight;
+  const dir=Math.abs(diff)<0.05?'hold':diff>0?'lose':'gain';
+  const reqPerDay=remaining>0?Math.abs(diff)*KCAL_PER_KG/remaining:Infinity;
+  const reqRate=remaining>0?Math.abs(diff)/(remaining/7):Infinity;
+  const m=p.height/100;
+  const maxRate=dir==='lose'?Math.min(1,0.01*p.weight):0.5;
+  const recRate=dir==='lose'?Math.min(0.75,Math.max(0.25,0.0075*p.weight)):0.35;
+  return {days,deadline,remaining,diff,dir,reqPerDay,reqRate,minW:18.5*m*m,maxW:24.9*m*m,tgtBmi:t.weight/(m*m),
+    floor:p.gender==='male'?1500:p.gender==='female'?1200:1350,maxRate,recRate,
+    realisticDays:Math.ceil(Math.abs(diff)/recRate*7),dailyChange:KCAL_PER_KG*recRate/7};
+}
+function projection(){
+  const ti=targetInfo(),b=basisDays();
+  let avg=null,n=0,prov=false;
+  if(b.length){n=b.length;avg={balance:mean(b,'balance'),intake:mean(b,'intake'),burn:mean(b,'burn'),active:mean(b,'active'),steps:mean(b,'steps'),bmr:b[0].bmr}}
+  else{const c=calcDay(todayStr());if(c.intake>0){avg={balance:c.balance,intake:c.intake,burn:c.burn,active:c.active,steps:c.steps,bmr:c.bmr};n=1;prov=true}}
+  let status='nodata',eff=null,estDays=null,estDate=null,gap=null;
+  if(ti.dir==='hold')status='reached';
+  else if(avg){
+    eff=ti.dir==='lose'?avg.balance:-avg.balance;
+    estDays=eff>20?Math.ceil(Math.abs(ti.diff)*KCAL_PER_KG/eff):null;
+    estDate=estDays!=null?addDays(todayStr(),estDays):null;
+    gap=isFinite(ti.reqPerDay)?ti.reqPerDay-eff:null;
+    if(ti.remaining<=0)status='overdue';
+    else if(eff<=20)status='stalled';
+    else status=estDays<=ti.remaining?'ontrack':'behind';
+  }
+  return {ti,avg,n,prov,status,eff,estDays,estDate,gap};
+}
+
+/* ================= chips, formatting ================= */
+const GLYPH={good:'✓ ',warn:'! ',bad:'▲ '};
+const chip=(c,t)=>'<span class="chip '+(c||'')+'">'+(GLYPH[c]||'')+esc(t)+'</span>';
+const STATUS_CHIP={reached:['good','Target reached'],ontrack:['good','On track'],behind:['warn','Behind pace'],stalled:['bad','Not moving toward target'],overdue:['bad','Past deadline'],nodata:['','Needs meal logs']};
+
+/* ================= tooltip ================= */
+const tipEl=$('#tip');
+function tipAttr(o){return esc(JSON.stringify(o))}
+function showTip(el,x,y){
+  let o;try{o=JSON.parse(el.getAttribute('data-tip'))}catch(e){return}
+  tipEl.replaceChildren();
+  const t=document.createElement('div');t.className='tip-title';t.textContent=o.title;tipEl.append(t);
+  (o.rows||[]).forEach(r=>{
+    const row=document.createElement('div');row.className='tip-row';
+    if(r.key){const k=document.createElement('i');k.className='key '+r.key;row.append(k)}
+    const v=document.createElement('b');v.textContent=r.value;
+    const l=document.createElement('span');l.textContent=r.label;
+    row.append(v,l);tipEl.append(row);
+  });
+  tipEl.hidden=false;
+  const w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+  let left=x+14,top=y-h-12;
+  if(left+w>window.innerWidth-8)left=x-w-14;
+  if(left<8)left=8;
+  if(top<8)top=y+16;
+  tipEl.style.left=left+'px';tipEl.style.top=top+'px';
+}
+const hideTip=()=>{tipEl.hidden=true};
+document.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t,e.clientX,e.clientY);else hideTip()});
+document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t,e.clientX,e.clientY);else hideTip()});
+document.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t){const r=t.getBoundingClientRect();showTip(t,r.left+r.width/2,r.top)}});
+document.addEventListener('focusout',hideTip);
+
+/* ================= chart + sparkline ================= */
+function rBar(x,y,w,h,r){
+  if(h<=0)return '';
+  r=Math.min(r,h,w/2);
+  return 'M'+x+','+(y+h)+'L'+x+','+(y+r)+'Q'+x+','+y+' '+(x+r)+','+y+'L'+(x+w-r)+','+y+'Q'+(x+w)+','+y+' '+(x+w)+','+(y+r)+'L'+(x+w)+','+(y+h)+'Z';
+}
+function weekDays(){
+  const t=todayStr(),out=[];
+  for(let i=6;i>=0;i--){
+    const ds=addDays(t,-i),c=calcDay(ds),d=S.days[ds];
+    c.has=c.intake>0||c.steps>0||!!(d&&d.workouts&&d.workouts.length);
+    out.push(c);
+  }
+  return out;
+}
+function chartHTML(){
+  const days=weekDays(),W=640,H=250,L=46,R=8,T=20,B=38,iw=W-L-R,ih=H-T-B;
+  const used=days.filter(x=>x.has);
+  const maxV=Math.max(1000,...used.map(x=>Math.max(x.intake,x.burn)));
+  const step=maxV>3000?1000:500,top=Math.ceil(maxV/step)*step;
+  const y=v=>T+ih-(v/top)*ih,band=iw/7,bw=Math.min(22,Math.floor(band/3));
+  const tickLbl=v=>v>=1000?(+(v/1000).toFixed(1))+'K':String(v);
+  let g='';
+  for(let v=0;v<=top;v+=step){g+='<line class="'+(v===0?'axis':'grid')+'" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+tickLbl(v)+'</text>'}
+  const latest=used.slice().reverse().find(x=>x.intake>0);
+  days.forEach((c,i)=>{
+    const x0=L+i*band,cx=x0+band/2,dt=parseD(c.date);
+    const isToday=i===6;
+    const lab=isToday?'Today':dt.toLocaleDateString(undefined,{weekday:'short'});
+    g+='<text x="'+cx+'" y="'+(H-18)+'" text-anchor="middle">'+esc(lab)+'</text><text x="'+cx+'" y="'+(H-3)+'" text-anchor="middle">'+dt.getDate()+'</text>';
+    if(!c.has){g+='<g class="band"><rect class="hit" x="'+x0+'" y="'+T+'" width="'+band+'" height="'+ih+'" data-tip="'+tipAttr({title:shortDate(c.date),rows:[{label:'Nothing logged',value:'–'}]})+'"/></g>';return}
+    const ix=cx-bw-1,ox=cx+1;
+    const tip={title:shortDate(c.date),rows:[
+      {key:'in',label:'Eaten',value:nf(c.intake)+' kcal'},
+      {key:'out',label:'Burned',value:nf(c.burn)+' kcal'},
+      {label:c.balance>=0?'Deficit':'Surplus',value:nf(Math.abs(c.balance))+' kcal'}]};
+    g+='<g class="band" tabindex="0" role="img" aria-label="'+esc(shortDate(c.date)+': eaten '+nf(c.intake)+', burned '+nf(c.burn)+' kcal')+'" data-tip="'+tipAttr(tip)+'"><rect class="bg" x="'+x0+'" y="'+T+'" width="'+band+'" height="'+ih+'" rx="4"/>';
+    if(c.intake>0)g+='<path class="in" d="'+rBar(ix,y(c.intake),bw,y(0)-y(c.intake),4)+'"/>';
+    const bh=y(0)-y(c.bmr),topAct=y(c.burn);
+    const actH=Math.max(0,y(c.bmr)-2-topAct);
+    if(c.active>0&&actH>0){
+      g+='<rect class="bmr" x="'+ox+'" y="'+y(c.bmr)+'" width="'+bw+'" height="'+bh+'"/>';
+      g+='<path class="out" d="'+rBar(ox,topAct,bw,actH,4)+'"/>';
+    }else g+='<path class="bmr" d="'+rBar(ox,y(c.bmr),bw,bh,4)+'"/>';
+    if(latest&&latest.date===c.date){
+      g+='<text class="val" x="'+(ix+bw)+'" y="'+(y(c.intake)-6)+'" text-anchor="end">'+nf(c.intake)+'</text>';
+      g+='<text class="val" x="'+ox+'" y="'+(topAct-6)+'" text-anchor="start">'+nf(c.burn)+'</text>';
+    }
+    g+='<rect class="hit" x="'+x0+'" y="'+T+'" width="'+band+'" height="'+ih+'"/></g>';
+  });
+  const rows=days.map(c=>c.has?'<tr><td>'+esc(shortDate(c.date))+'</td><td>'+nf(c.intake)+'</td><td>'+nf(c.bmr)+'</td><td>'+nf(c.active)+'</td><td>'+nf(c.burn)+'</td><td>'+(c.intake>0?signed(c.balance):'–')+'</td></tr>':'<tr><td>'+esc(shortDate(c.date))+'</td><td colspan="5" style="text-align:left;color:var(--muted)">Nothing logged</td></tr>').join('');
+  return '<div class="legend"><span><i class="dot in"></i>Eaten</span><span><i class="dot bmr"></i>BMR (resting burn)</span><span><i class="dot out"></i>Activity burn</span></div>'+
+    '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="group" aria-label="Calories eaten and burned over the last seven days">'+g+'</svg>'+
+    '<details class="tableview"'+(ui.chartTable?' open':'')+' id="tbl"><summary>View as table</summary><div class="tblwrap"><table><thead><tr><th>Day</th><th>Eaten</th><th>BMR</th><th>Activity</th><th>Burned</th><th>Deficit</th></tr></thead><tbody>'+rows+'</tbody></table></div></details>';
+}
+function sparkHTML(vals,dec,label,unit){
+  const pts=vals.filter(v=>v.v!=null);
+  if(!pts.length)return '<span class="spark-empty">No readings in the last 7 days</span>';
+  const W=180,H=44,px=8,py=8;
+  let mn=Math.min(...pts.map(p=>p.v)),mx=Math.max(...pts.map(p=>p.v));
+  if(mx-mn<1e-9){mn-=1;mx+=1}
+  const X=i=>px+i*(W-2*px)/6,Y=v=>py+(1-(v-mn)/(mx-mn))*(H-2*py);
+  let path='',run=[];
+  const flush=()=>{if(run.length>1)path+='<polyline class="ln" points="'+run.join(' ')+'"/>';run=[]};
+  let hits='',last=null;
+  vals.forEach((p,i)=>{
+    if(p.v==null){flush();return}
+    run.push(X(i).toFixed(1)+','+Y(p.v).toFixed(1));last=i;
+    hits+='<circle class="hit" cx="'+X(i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="11" data-tip="'+tipAttr({title:shortDate(p.date),rows:[{label:label,value:nf(p.v,dec)+' '+unit}]})+'"/>';
+  });
+  flush();
+  const end='<circle class="end" cx="'+X(last).toFixed(1)+'" cy="'+Y(vals[last].v).toFixed(1)+'" r="4.5"/>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(label+', last 7 days')+'">'+path+end+hits+'</svg>';
+}
+
+/* ================= banner + date bar ================= */
+function banner(){
+  const sampleDays=Object.keys(S.days).filter(k=>S.days[k].sample);
+  if(!sampleDays.length&&S.settings.mine)return '';
+  let msg=sampleDays.length?'<b>Example entries are showing</b> so every tab has something to read. Edit a day and it becomes yours, or clear them all.':'<b>Your profile and target still hold example values.</b>';
+  if(sampleDays.length&&!S.settings.mine)msg+=' The profile and target are examples too: set yours first.';
+  return '<aside class="banner" role="note"><p>'+msg+'</p>'+(sampleDays.length?'<button class="btn sm ghost" data-act="clearSample">Clear example entries</button>':'')+'</aside>';
+}
+function dateBar(){
+  const t=todayStr();
+  return '<div class="datebar"><button class="btn ghost" data-act="dayPrev" aria-label="Previous day">‹</button><input class="txt" type="date" id="dateIn" data-ch="date" value="'+ui.date+'" max="'+t+'" aria-label="Date"><button class="btn ghost" data-act="dayNext" aria-label="Next day"'+(ui.date>=t?' disabled':'')+'>›</button>'+(ui.date!==t?'<button class="btn ghost" data-act="dayToday">Today</button>':'')+'<span class="lbl">'+esc(shortDate(ui.date))+'</span></div>';
+}
+function needProfile(){
+  return '<section class="card"><h2>Fill in your details first</h2><p class="lead">Calories burned, BMR and your target all depend on your age (18 or over), height and weight.</p><div><button class="btn" data-act="tab" data-tab="profile">Open personal info</button></div></section>';
+}
+
+/* ================= PROFILE ================= */
+function profOutHTML(){
+  const p=S.settings.profile;
+  if(!profileOK(p))return '<p class="lead">Enter an age of 18 or over, a height between 100 and 230 cm and a weight between 30 and 300 kg. BMI categories and the BMR formula here are for adults.</p>';
+  const b=bmi(p),band=bmiBand(b),m=p.height/100;
+  const lo=18.5*m*m,hi=24.9*m*m;
+  return '<div><span class="lbl">Body mass index</span><div class="row" style="align-items:baseline;gap:12px"><span class="big">'+nf(b,1)+'</span>'+chip(band===1?'good':band===0?'warn':'warn',BMI_BANDS[band][1])+'</div></div>'+
+   '<div><div class="scale" aria-hidden="true">'+BMI_BANDS.map((x,i)=>'<div class="'+(i===band?'on':'')+'"></div>').join('')+'</div><div class="scale-lbl">'+BMI_BANDS.map((x,i)=>'<span class="'+(i===band?'on':'')+'">'+x[0]+'</span>').join('')+'</div></div>'+
+   '<p class="hint">Healthy weight for '+nf(p.height)+' cm: '+nf(lo,1)+' to '+nf(hi,1)+' kg. BMI is a rough screen and does not separate muscle from fat. Some guidelines use lower cut-offs for South Asian adults, with overweight starting near 23.</p>'+
+   '<div><span class="lbl">Basal metabolic rate</span><div><span class="big">'+nf(bmr(p))+'</span><span class="u">kcal per day</span></div></div>'+
+   '<p class="hint">Calories your body burns at complete rest, from the Mifflin-St Jeor equation'+(p.gender==='other'?' (average of the male and female versions)':'')+'. Steps and workouts are added on top in Activity.</p>';
+}
+function viewProfile(){
+  const p=S.settings.profile,fv=k=>Number.isFinite(p[k])?p[k]:'';
+  return '<div class="grid2"><section class="card"><h2>Personal information</h2>'+
+   '<div class="field"><span class="lbl" id="gl">Gender</span><div class="seg" role="radiogroup" aria-labelledby="gl">'+
+   [['male','Male'],['female','Female'],['other','Other']].map(g=>'<label><input type="radio" name="gender" value="'+g[0]+'" data-ch="gender"'+(p.gender===g[0]?' checked':'')+'><span>'+g[1]+'</span></label>').join('')+'</div></div>'+
+   '<div class="fields">'+
+   '<label class="field"><span class="lbl">Age</span><span class="num"><input type="number" inputmode="numeric" min="18" max="100" step="1" data-in="prof" data-k="age" value="'+fv('age')+'"><span class="u">years</span></span></label>'+
+   '<label class="field"><span class="lbl">Height</span><span class="num"><input type="number" inputmode="decimal" min="100" max="230" step="0.5" data-in="prof" data-k="height" value="'+fv('height')+'"><span class="u">cm</span></span></label>'+
+   '<label class="field"><span class="lbl">Weight</span><span class="num"><input type="number" inputmode="decimal" min="30" max="300" step="0.1" data-in="prof" data-k="weight" value="'+fv('weight')+'"><span class="u">kg</span></span></label></div>'+
+   '<p class="hint">Update your weight whenever you weigh in. Progress and the time to target recalculate from it.</p></section>'+
+   '<section class="card stack" id="prof-out" style="gap:14px">'+profOutHTML()+'</section></div>';
+}
+
+/* ================= TARGET ================= */
+function tgtOutHTML(){
+  const p=S.settings.profile,t=S.settings.target;
+  if(!profileOK(p))return '<p class="lead">Add your personal information first so the plan can work out how much has to change.</p>';
+  if(!(t.weight>=30&&t.weight<=300)||!(t.amount>0))return '<p class="lead">Enter a target weight and how long you want to take.</p>';
+  const ti=targetInfo();
+  let h='';
+  if(ti.dir==='hold')h+='<p class="lead">Your target matches your current weight, so this is a maintenance goal.</p>';
+  else{
+    h+='<div><span class="lbl">To '+(ti.dir==='lose'?'lose':'gain')+'</span><div><span class="big">'+nf(Math.abs(ti.diff),1)+'</span><span class="u">kg</span></div></div>';
+    h+='<div class="pair"><div><span class="lbl">Deadline</span><div class="mid">'+esc(fullDate(ti.deadline))+'</div><span class="fine">'+(ti.remaining>0?nf(ti.remaining)+' days left':'Deadline has passed')+'</span></div>'+
+       '<div><span class="lbl">Needed per day</span><div class="mid">'+(isFinite(ti.reqPerDay)?nf(ti.reqPerDay):'–')+'<span class="u">kcal '+(ti.dir==='lose'?'deficit':'surplus')+'</span></div><span class="fine">'+(isFinite(ti.reqRate)?nf(ti.reqRate,2)+' kg per week':'')+'</span></div></div>';
+    if(isFinite(ti.reqRate)&&ti.reqRate>ti.maxRate)h+='<p class="note">That pace is faster than the usual '+(ti.dir==='lose'?'limit of about '+nf(ti.maxRate,1)+' kg a week':'steady gain of up to '+nf(ti.maxRate,1)+' kg a week')+'. A steadier plan reaches '+nf(S.settings.target.weight,1)+' kg around '+esc(fullDate(addDays(todayStr(),ti.realisticDays)))+'. Consider a longer duration.</p>';
+  }
+  h+='<div class="row"><span class="lbl">Target BMI</span><b style="font:700 22px var(--font-display)">'+nf(ti.tgtBmi,1)+'</b>'+chip(ti.tgtBmi<18.5?'bad':ti.tgtBmi<25?'good':'',ti.tgtBmi<18.5?'Below healthy range':ti.tgtBmi<25?'Healthy range':'Above healthy range')+'</div>';
+  if(ti.tgtBmi<18.5)h+='<p class="note bad">This target is under the healthy range for your height (lowest healthy weight is about '+nf(ti.minW,1)+' kg). Pick a higher target or talk to a doctor first.</p>';
+  h+='<div><button class="btn" data-act="tab" data-tab="progress">See my progress</button></div>';
+  return h;
+}
+function viewTarget(){
+  const t=S.settings.target,fv=v=>Number.isFinite(v)?v:'';
+  return '<div class="grid2"><section class="card"><h2>Target</h2>'+
+   '<div class="fields"><label class="field"><span class="lbl">Target weight</span><span class="num"><input type="number" inputmode="decimal" min="30" max="300" step="0.1" data-in="tgt" data-k="weight" value="'+fv(t.weight)+'"><span class="u">kg</span></span></label>'+
+   '<label class="field"><span class="lbl">Duration</span><span class="num"><input type="number" inputmode="numeric" min="1" max="520" step="1" data-in="tgt" data-k="amount" value="'+fv(t.amount)+'"></span></label>'+
+   '<label class="field"><span class="lbl">Unit</span><select class="txt" data-ch="tgtunit" style="padding:12px 10px">'+[['days','Days'],['weeks','Weeks'],['months','Months']].map(u=>'<option value="'+u[0]+'"'+(t.unit===u[0]?' selected':'')+'>'+u[1]+'</option>').join('')+'</select></label></div>'+
+   '<label class="field" style="max-width:220px"><span class="lbl">Start date</span><input class="txt" type="date" data-ch="tgtstart" value="'+esc(t.start||todayStr())+'"></label>'+
+   '<p class="hint">The deadline is the start date plus the duration. Progress compares it with your real calorie balance.</p></section>'+
+   '<section class="card stack" id="tgt-out" style="gap:14px">'+tgtOutHTML()+'</section></div>';
+}
+
+/* ================= MEALS ================= */
+function dayNutrition(d){
+  const t={kcal:0,p:0,c:0,f:0,fib:0,sug:0,micros:{},ai:0,n:0};
+  SLOTS.forEach(s=>{
+    const m=d&&d.meals&&d.meals[s[0]];
+    if(!m||!(m.kcal>0))return;
+    t.n++;t.kcal+=m.kcal;
+    if(m.ai){t.ai++;t.p+=m.p||0;t.c+=m.c||0;t.f+=m.f||0;t.fib+=m.fib||0;t.sug+=m.sug||0;MICROS.forEach(x=>{t.micros[x[0]]=(t.micros[x[0]]||0)+((m.micros&&m.micros[x[0]])||0)})}
+  });
+  return t;
+}
+function macroHTML(t){
+  const rows=[['Protein',t.p,4],['Carbs',t.c,4],['Fat',t.f,9]];
+  const tot=rows.reduce((a,r)=>a+r[1]*r[2],0)||1;
+  return rows.map(r=>{const k=r[1]*r[2],pc=Math.round(k/tot*100);return '<div class="macro"><span>'+r[0]+'</span><div class="meter" role="img" aria-label="'+r[0]+' '+pc+' percent of macro calories"><span style="width:'+pc+'%"></span></div><span class="r"><b>'+nf(r[1],1)+' g</b> · '+pc+'%</span></div>'}).join('')+
+    '<p class="fine">Fibre '+nf(t.fib,1)+' g · Sugar '+nf(t.sug,1)+' g</p>';
+}
+function microHTML(m){
+  return '<div class="micros">'+MICROS.map(x=>{const v=m[x[0]]||0,pc=Math.round(v/x[3]*100);return '<div class="micro"><span>'+x[1]+'</span><span class="a">'+nf(v,v<10?1:0)+' '+x[2]+' · '+pc+'%</span><div class="meter" role="img" aria-label="'+x[1]+' '+pc+' percent of daily value"><span style="width:'+clamp(pc,0,100)+'%"></span></div></div>'}).join('')+'</div><p class="fine">Percent of a typical adult daily value.</p>';
+}
+function summaryHTML(){
+  const d=getDay(ui.date),t=dayNutrition(d);
+  if(!t.n)return '<div><span class="lbl">Day total</span><div><span class="big">0</span><span class="u">kcal</span></div></div><p class="lead">Add a photo or type calories in any meal below. Totals, macronutrients and micronutrients appear here.</p>';
+  let h='<div class="row between"><div><span class="lbl">Day total</span><div><span class="big">'+nf(t.kcal)+'</span><span class="u">kcal · '+t.n+' of 6 meals</span></div></div></div>';
+  if(t.ai){
+    h+='<div class="grid2" style="gap:24px"><div class="stack"><span class="lbl">Macronutrients</span>'+macroHTML(t)+'</div><div class="stack"><span class="lbl">Micronutrients</span>'+microHTML(t.micros)+'</div></div>';
+    if(t.ai<t.n)h+='<p class="fine">Nutrient breakdown covers '+t.ai+' of '+t.n+' logged meals. Meals with typed calories only have no breakdown.</p>';
+  }else h+='<p class="fine">Analyze a meal photo to see macronutrients and micronutrients.</p>';
+  return h;
+}
+function mealCardHTML(slot){
+  const d=getDay(ui.date),m=(d&&d.meals[slot])||{},st=ui.meal[slot]||{};
+  const aiOn=!!AI.sample;
+  let h='<article class="card meal" id="meal-'+slot+'" data-slot="'+slot+'"><div class="meal-head"><h3>'+SLOT_LABEL[slot]+'</h3><label class="kc"><input type="number" inputmode="numeric" min="0" max="6000" step="1" data-in="kcal" aria-label="'+SLOT_LABEL[slot]+' calories" value="'+(m.kcal>0?Math.round(m.kcal):'')+'" placeholder="0"><span class="u" style="margin:0">kcal</span></label></div>';
+  h+='<div class="meal-body">'+(m.thumb?'<img class="thumb" alt="Photo of '+SLOT_LABEL[slot].toLowerCase()+'" src="'+esc(m.thumb)+'">':'')+'<div class="meal-main"><input class="txt" type="text" maxlength="300" data-in="desc" placeholder="What did you eat? (optional, helps the AI)" aria-label="'+SLOT_LABEL[slot]+' description" value="'+esc(m.desc||'')+'">'+
+   '<div class="acts"><button class="btn sm" data-act="cam"'+(st.busy?' disabled':'')+'>Take photo</button><button class="btn sm ghost" data-act="gal"'+(st.busy?' disabled':'')+'>From gallery</button>'+
+   (aiOn?'<button class="btn sm ghost" data-act="analyze"'+(st.busy?' disabled':'')+'>'+(m.ai?'Re-analyze':'Estimate with AI')+'</button>':'')+
+   (st.busy?'<button class="btn sm ghost" data-act="stopMeal">Stop</button>':'')+
+   (m.kcal>0||m.desc||m.thumb?'<button class="btn sm link" data-act="clearMeal">Clear</button>':'')+'</div></div></div>';
+  h+='<div class="status'+(st.msg?' err':'')+'" aria-live="polite">'+(st.busy?'<span class="spin"></span>Reading your meal…':esc(st.msg||''))+'</div>';
+  if(m.ai&&m.kcal>0){
+    h+='<div class="nutri"><div class="row">'+chip(m.conf==='high'?'good':m.conf==='example'?'':m.conf==='low'?'warn':'', m.conf==='example'?'Example entry':'AI confidence: '+(m.conf||'medium'))+(m.dish?'<span class="fine">'+esc(m.dish)+'</span>':'')+'</div>'+
+      '<div class="stack"><span class="lbl">Macronutrients</span>'+macroHTML(m)+'</div><div class="stack"><span class="lbl">Micronutrients</span>'+microHTML(m.micros||{})+'</div>';
+    if(m.items&&m.items.length)h+='<details><summary>What the AI saw ('+m.items.length+' items)</summary><ul class="items">'+m.items.map(i=>'<li>'+esc(i.n)+(i.q?' · '+esc(i.q):'')+' · '+nf(i.k)+' kcal</li>').join('')+'</ul></details>';
+    if(m.notes)h+='<p class="fine">'+esc(m.notes)+'</p>';
+    h+='<p class="fine">AI estimate from a photo. Edit the calories above if you know better.</p></div>';
+  }
+  return h+'</article>';
+}
+function glassSVG(){return '<svg viewBox="0 0 24 34" aria-hidden="true"><path class="wat" d="M5.1 12h13.8l-1.5 18.2a2 2 0 0 1-2 1.8H8.6a2 2 0 0 1-2-1.8z"/><path class="cup" d="M3.5 3h17l-2 27.4a2.4 2.4 0 0 1-2.4 2.2H7.9a2.4 2.4 0 0 1-2.4-2.2z"/></svg>'}
+function waterHTML(){
+  const d=getDay(ui.date),n=(d&&d.water)||0;
+  let g='';for(let i=1;i<=Math.max(GLASS_GOAL,n);i++)g+='<button class="glass'+(i<=n?' on':'')+'" data-act="water" data-n="'+i+'" aria-label="Set water to '+i+' glasses" aria-pressed="'+(i<=n)+'">'+glassSVG()+'</button>';
+  return '<div class="row between"><div><span class="lbl">Glasses of water</span><div><span class="big">'+n+'</span><span class="u">of '+GLASS_GOAL+' · '+nf(n*GLASS_ML)+' ml</span></div></div><div class="row"><button class="btn ghost sm" data-act="waterStep" data-d="-1" aria-label="One glass less">−</button><button class="btn sm" data-act="waterStep" data-d="1">+ Glass</button></div></div><div class="glasses">'+g+'</div>';
+}
+function viewMeals(){
+  const aiNote=AI.sample?'':aiOffHTML();
+  return dateBar()+aiNote+'<section class="card stack" id="meals-sum" style="gap:14px">'+summaryHTML()+'</section><section class="card" id="water">'+waterHTML()+'</section>'+
+   '<p class="hint">Take photo opens your camera and From gallery opens your photos. A photo goes to Anthropic only when it is analyzed, and only a small thumbnail is kept on this phone.</p>'+
+   '<div class="grid2" id="meal-grid">'+SLOTS.map(s=>mealCardHTML(s[0])).join('')+'</div>';
+}
+function refreshMeal(slot){
+  const el=$('#meal-'+slot);
+  if(el&&ui.tab==='meals'){el.outerHTML=mealCardHTML(slot)}
+  const s=$('#meals-sum');if(s&&ui.tab==='meals')s.innerHTML=summaryHTML();
+}
+
+/* --- images --- */
+async function prepImage(file){
+  let bmp;
+  try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}
+  catch(e){
+    bmp=await new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{res(im)};im.onerror=()=>rej(new Error('decode'));im.src=u});
+  }
+  const w0=bmp.width||bmp.naturalWidth,h0=bmp.height||bmp.naturalHeight;
+  const make=(max,q)=>new Promise((res,rej)=>{
+    const s=Math.min(1,max/Math.max(w0,h0)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(w0*s));c.height=Math.max(1,Math.round(h0*s));
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    c.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',q);
+  });
+  const big=await make(1024,.82),small=await make(176,.6);
+  const thumb=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>rej(new Error('read'));fr.readAsDataURL(small)});
+  return {big,thumb};
+}
+function dataUrlToBlob(u){
+  const p=u.split(','),mime=(p[0].match(/:(.*?);/)||[])[1]||'image/jpeg',bin=atob(p[1]),a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return new Blob([a],{type:mime});
+}
+async function onPhoto(file,slot){
+  if(!file)return;
+  const date=ui.date;
+  try{
+    const r=await prepImage(file);
+    pending[slot]=r.big;
+    const d=touch(date);const m=d.meals[slot]||(d.meals[slot]={});m.thumb=r.thumb;
+    ui.meal[slot]={};refreshMeal(slot);
+    analyzeMeal(slot,date);
+  }catch(e){ui.meal[slot]={msg:"That photo could not be read. Try a JPEG or PNG."};refreshMeal(slot)}
+}
+function aiErrorText(e){
+  const c=e&&e.code;
+  return {no_key:'Add your Anthropic API key in Settings to use AI estimates.',bad_key:'Anthropic rejected the API key. Check it in Settings.',bad_model:'That model name was not found. Check it in Settings.',offline:'No internet connection. Try again when you are online.',not_granted:'Claude access was declined for this page, so AI estimates are off.',sampling_disabled:'AI estimates are not available for this account.',rate_limited:'Too many requests right now. Wait a minute and try again.',image_rejected:'That photo could not be used. Try a different JPEG or PNG.',images_unavailable:'Photo analysis is not available here. Describe the meal instead.',invalid_json:'The answer came back garbled. Try again.',refused:'Claude could not estimate this one. Try a clearer photo or a description.',empty_completion:'No answer came back. Try again.',session_expired:'Please sign in again to use AI estimates.',prompt_too_large:'That was too much to send. Try again.'}[c]||'Something went wrong while contacting the AI. Try again.';
+}
+function aiOffHTML(){return '<p class="note plain">AI estimates are off until you add an Anthropic API key. You can still type calories for each meal. <button class="btn link" data-act="tab" data-tab="settings">Open settings</button></p>'}
+function mealPrompt(slot,desc,hasImage){
+  const list=MICROS.map(m=>m[0]+' = '+m[1]+' in '+m[2]).join(', ');
+  const shape=MICROS.map(m=>'"'+m[0]+'":0').join(',');
+  return 'You are a nutrition estimator inside a fitness tracking app.\n'+
+   'Meal slot: '+SLOT_LABEL[slot]+'.\n'+
+   (hasImage?'A photo of the meal is attached. Estimate what is on the plate or in the bowl.\n':'No photo is attached. Estimate from the description.\n')+
+   (desc?'The person describes it as: "'+desc.replace(/"/g,"'").slice(0,300)+'"\n':'There is no written description.\n')+
+   'Estimate the whole serving shown or described, using realistic portion sizes. Indian, South Asian and other regional dishes are common, so name them correctly.\n'+
+   'Reply with only one JSON object in exactly this shape:\n'+
+   '{"dish":"short name","items":[{"name":"...","portion":"e.g. 1 cup (150 g)","kcal":0}],"kcal":0,"protein_g":0,"carbs_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0,"micros":{'+shape+'},"confidence":"low or medium or high","notes":"one short sentence naming the main assumption"}\n'+
+   'Micronutrient keys: '+list+'.\n'+
+   'Every value is a single number, never a range. Item calories should add up to the total within 5 percent, and 4 kcal per gram of protein and carbohydrate plus 9 kcal per gram of fat should be within 15 percent of the total.\n'+
+   'If the picture shows no food and there is no description, reply with {"error":"no_food"} instead.';
+}
+function cleanMeal(r){
+  if(!r||typeof r!=='object'||Array.isArray(r))throw {code:'invalid_json'};
+  if(r.error)return {error:String(r.error)};
+  const n=(v,max)=>{const x=Number(v);return Number.isFinite(x)&&x>=0?Math.min(x,max):0};
+  const items=(Array.isArray(r.items)?r.items:[]).slice(0,12).map(i=>({n:String((i&&i.name)||'').slice(0,60),q:String((i&&i.portion)||'').slice(0,40),k:Math.round(n(i&&i.kcal,3000))})).filter(i=>i.n);
+  let kcal=Math.round(n(r.kcal,5000));if(!kcal)kcal=items.reduce((a,i)=>a+i.k,0);
+  if(!kcal)return {error:'no_food'};
+  const micros={};MICROS.forEach(m=>{micros[m[0]]=r1(n(r.micros&&r.micros[m[0]],1e6))});
+  return {dish:String(r.dish||'').slice(0,60),items,kcal,p:r1(n(r.protein_g,500)),c:r1(n(r.carbs_g,800)),f:r1(n(r.fat_g,400)),fib:r1(n(r.fiber_g,150)),sug:r1(n(r.sugar_g,400)),micros,conf:['low','medium','high'].indexOf(r.confidence)>=0?r.confidence:'medium',notes:String(r.notes||'').slice(0,220)};
+}
+async function analyzeMeal(slot,dateArg){
+  const date=dateArg||ui.date,d=getDay(date,true),m=d.meals[slot]||(d.meals[slot]={});
+  const desc=(m.desc||'').trim();
+  const blob=pending[slot]||(m.thumb?dataUrlToBlob(m.thumb):null);
+  const show=()=>{if(ui.date===date)refreshMeal(slot)};
+  if(!AI.sample){ui.meal[slot]={msg:aiErrorText({code:'no_key'})};show();return}
+  if(!blob&&!desc){ui.meal[slot]={msg:'Add a photo or describe the meal first.'};show();return}
+  const useImg=!!blob&&AI.imagesOK;
+  if(!useImg&&!desc){ui.meal[slot]={msg:aiErrorText({code:'images_unavailable'})};show();return}
+  const ctl=new AbortController();
+  ui.meal[slot]={busy:true,ctl};show();
+  try{
+    const opts={signal:ctl.signal,modelTier:'default'};
+    if(useImg)opts.images=blob;
+    const raw=await AI.sample.json(mealPrompt(slot,desc,useImg),opts);
+    const r=cleanMeal(raw);
+    if(r.error){ui.meal[slot]={msg:'No food was found. Try a clearer photo or describe the meal.'}}
+    else{
+      const dd=touch(date);const mm=dd.meals[slot]||(dd.meals[slot]={});
+      Object.assign(mm,r,{ai:true,at:new Date().toISOString()});
+      ui.meal[slot]={};
+    }
+  }catch(e){ui.meal[slot]=(e&&e.code==='cancelled')?{}:{msg:aiErrorText(e)}}
+  show();
+}
+
+/* ================= ACTIVITY ================= */
+function sourcePanelHTML(){
+  const cur=S.settings.source||'';
+  const opts='<option value="">Choose an app or device…</option>'+SOURCES.map(g=>'<optgroup label="'+esc(g[0])+'">'+g[1].map(n=>'<option'+(n===cur?' selected':'')+'>'+esc(n)+'</option>').join('')+'</optgroup>').join('');
+  return '<section class="card" id="srcpanel"><div><h3>Connect an app or device</h3><p class="hint" style="margin-top:4px">This app cannot log in to those apps for you, so there is no live sync. Pick where your numbers come from, then import the file the app exports (CSV or JSON), or type values in by hand.</p></div>'+
+   '<div class="src-grid"><label class="field"><span class="lbl">Data source</span><select class="txt" id="srcsel" data-ch="source" style="padding:11px 10px">'+opts+'</select></label>'+
+   '<div class="row"><button class="btn" data-act="import"'+(cur?'':' disabled')+'>Import a file</button></div></div>'+
+   (cur?'<p class="fine">Source: '+esc(cur)+'. Imported days are labelled with it.</p>':'<p class="fine">Choose a source to turn on importing.</p>')+
+   '<p class="fine" id="impmsg" aria-live="polite">'+esc(ui.imp)+'</p>'+
+   '<details><summary class="fine" style="cursor:pointer;color:var(--accent);font-weight:600">File format for importing</summary><p class="hint" style="margin-top:6px">One row per day with a header. Columns are optional except date: <code>date</code> (2026-10-15 or 15/10/2026), <code>steps</code>, <code>workout</code>, <code>minutes</code>, <code>calories</code> (burned, from the device), <code>sleep_hours</code>, <code>stress</code>, <code>resting_hr</code>, <code>avg_hr</code>, <code>spo2</code>, <code>hrv</code>, <code>systolic</code>, <code>diastolic</code>. JSON works too, as a list of objects with the same names. Importing the same file again replaces those days\' imported workouts instead of doubling them.</p></details></section>';
+}
+function actOutHTML(){
+  const p=S.settings.profile,c=calcDay(ui.date);
+  const d=getDay(ui.date);
+  return '<div class="row between"><div><span class="lbl">Active calories burned</span><div><span class="big">'+nf(c.active)+'</span><span class="u">kcal</span></div></div>'+chip(c.steps>=STEP_GOAL?'good':'',nf(Math.round(c.steps/STEP_GOAL*100))+'% of '+nf(STEP_GOAL)+' steps')+'</div>'+
+   '<div class="meter"><span style="width:'+clamp(c.steps/STEP_GOAL*100,0,100)+'%"></span></div>'+
+   '<dl class="kv"><dt>Steps ('+nf(stepKm(c.steps,p),1)+' km)</dt><dd>'+nf(c.stepK)+'</dd><dt>Workouts</dt><dd>'+nf(c.workK)+'</dd><dt>BMR for the day</dt><dd>'+nf(c.bmr)+'</dd><dt class="total">Total burned</dt><dd class="total">'+nf(c.burn)+' kcal</dd></dl>'+
+   (d&&d.src&&d.src.activity?'<p class="fine">Imported from '+esc(d.src.activity)+'.</p>':'');
+}
+function workoutListHTML(){
+  const d=getDay(ui.date),p=S.settings.profile,list=(d&&d.workouts)||[];
+  if(!list.length)return '<p class="hint">No workouts logged for this day.</p>';
+  return '<ul class="wlist">'+list.map(w=>'<li><div><b>'+esc(w.type)+'</b><div class="sub">'+(w.minutes>0?nf(w.minutes)+' min · '+esc(w.intensity||'moderate')+' · ':'')+(w.deviceKcal>0?'calories from device'+(w.imported?' (imported)':''):'estimated')+'</div></div><div class="row"><b style="font:600 20px var(--font-display)">'+nf(workoutKcal(w,p))+' kcal</b><button class="btn sm link" data-act="delWorkout" data-id="'+esc(w.id)+'" aria-label="Delete '+esc(w.type)+'">Delete</button></div></li>').join('')+'</ul>';
+}
+function viewActivity(){
+  const p=S.settings.profile;
+  if(!profileOK(p))return needProfile();
+  const d=getDay(ui.date),steps=d&&d.steps!=null?d.steps:'';
+  return dateBar()+
+   '<div class="grid2"><section class="card"><h2>Physical activity</h2><label class="field"><span class="lbl">Step count</span><span class="num"><input type="number" inputmode="numeric" min="0" max="100000" step="1" id="stepsIn" data-in="steps" value="'+steps+'" placeholder="0"><span class="u">steps</span></span></label>'+
+   '<div><span class="lbl">Add a workout</span></div>'+
+   '<div class="fields"><label class="field"><span class="fine">Type</span><select class="txt" id="woType">'+Object.keys(MET).map(k=>'<option>'+esc(k)+'</option>').join('')+'</select></label>'+
+   '<label class="field"><span class="fine">Minutes</span><input class="txt" type="number" inputmode="numeric" min="1" max="600" id="woMin" placeholder="30"></label>'+
+   '<label class="field"><span class="fine">Intensity</span><select class="txt" id="woInt"><option value="light">Light</option><option value="moderate" selected>Moderate</option><option value="vigorous">Vigorous</option></select></label>'+
+   '<label class="field"><span class="fine">Device calories (optional)</span><input class="txt" type="number" inputmode="numeric" min="0" max="5000" id="woKcal" placeholder="e.g. 220"></label></div>'+
+   '<div><button class="btn" data-act="addWorkout">Add workout</button></div><div id="wlist">'+workoutListHTML()+'</div></section>'+
+   '<section class="card stack" id="act-out" style="gap:14px">'+actOutHTML()+
+   '<details><summary class="fine" style="cursor:pointer;color:var(--accent);font-weight:600">How calories are estimated</summary><p class="hint" style="margin-top:6px">Steps use your height for stride length and about 0.5 kcal per kg per km walked. Workouts use MET values for the activity, minus the resting 1 MET, because your BMR already covers resting burn. Entering the calories your device reports replaces the estimate. If a walk is already in your step count, do not log it as a workout too.</p></details></section></div>'+
+   sourcePanelHTML();
+}
+
+/* ================= HEALTH ================= */
+const HEALTH=[
+ {id:'sleep',label:'Sleep',unit:'hours',dec:1,hint:'Adults usually need 7 to 9 hours.',fields:[{k:'sleep',min:0,max:24,step:'0.1',ph:'7.5'}],spark:'sleep',
+  st:v=>{const s=v.sleep;if(s==null)return null;return s<6?['warn','Short']:s<7?['','A little short']:s<=9?['good','Good']:['','Long']}},
+ {id:'stress',label:'Stress',unit:'out of 10',dec:0,hint:'1 is calm, 10 is very stressed. Use your watch score or your own rating.',fields:[{k:'stress',min:1,max:10,step:'1',ph:'4'}],spark:'stress',
+  st:v=>{const s=v.stress;if(s==null)return null;return s<=3?['good','Low']:s<=6?['','Moderate']:['warn','High']}},
+ {id:'rhr',label:'Resting heart rate',unit:'bpm',dec:0,hint:'Typical adult range is 60 to 100 bpm. Fit people often sit lower.',fields:[{k:'rhr',min:25,max:220,step:'1',ph:'64'}],spark:'rhr',
+  st:v=>{const s=v.rhr;if(s==null)return null;return s<40?['warn','Very low']:s<60?['','Low']:s<=100?['good','Normal']:['warn','High']}},
+ {id:'ahr',label:'Average heart rate',unit:'bpm',dec:0,hint:'Across the day, as your device reports it.',fields:[{k:'ahr',min:25,max:220,step:'1',ph:'78'}],spark:'ahr',st:()=>null},
+ {id:'spo2',label:'Blood oxygen (SpO₂)',unit:'%',dec:0,hint:'95% and above is normal near sea level.',fields:[{k:'spo2',min:50,max:100,step:'1',ph:'97'}],spark:'spo2',
+  st:v=>{const s=v.spo2;if(s==null)return null;return s>=95?['good','Normal']:s>=92?['warn','Slightly low']:['bad','Low · seek advice if unwell']}},
+ {id:'hrv',label:'Heart rate variability',unit:'ms',dec:0,hint:'Varies a lot between people. Watch your own trend.',fields:[{k:'hrv',min:1,max:300,step:'1',ph:'42'}],spark:'hrv',st:()=>null},
+ {id:'bp',label:'Blood pressure',unit:'mmHg',dec:0,hint:'Top number first. Shown against general adult ranges.',fields:[{k:'sys',min:60,max:260,step:'1',ph:'120'},{k:'dia',min:30,max:160,step:'1',ph:'80'}],spark:'sys',
+  st:v=>{const a=v.sys,b=v.dia;if(a==null||b==null)return null;
+    if(a>=180||b>=120)return ['bad','Very high · seek care'];if(a>=140||b>=90)return ['bad','High'];if(a>=130||b>=80)return ['warn','Raised'];if(a>=120)return ['','Slightly raised'];return ['good','Normal']}}
+];
+function sevenDays(key){
+  const out=[];
+  for(let i=6;i>=0;i--){const ds=addDays(ui.date,-i),d=S.days[ds];const v=d&&d.health&&d.health[key];out.push({date:ds,v:Number.isFinite(v)?v:null})}
+  return out;
+}
+function tileVis(h){
+  const d=getDay(ui.date),vals=(d&&d.health)||{};
+  const s=h.st(vals);
+  return {chip:s?chip(s[0],s[1]):'',spark:sparkHTML(sevenDays(h.spark),h.dec,h.label,h.unit)};
+}
+function tileHTML(h){
+  const d=getDay(ui.date),vals=(d&&d.health)||{},vis=tileVis(h);
+  return '<article class="card tile" data-tile="'+h.id+'"><div class="tile-head"><h3>'+h.label+'</h3><span data-chip>'+vis.chip+'</span></div>'+
+   '<div class="tile-fields">'+h.fields.map((f,i)=>'<label class="num">'+'<input type="number" inputmode="decimal" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'" data-in="health" data-k="'+f.k+'" data-tile="'+h.id+'" aria-label="'+esc(h.label+(h.fields.length>1?(i?' lower number':' upper number'):''))+'" placeholder="'+f.ph+'" value="'+(Number.isFinite(vals[f.k])?vals[f.k]:'')+'">'+(i===h.fields.length-1?'<span class="u">'+h.unit+'</span>':'<span class="u">/</span>')+'</label>').join('')+'</div>'+
+   '<div class="spark" data-spark>'+vis.spark+'</div><p class="fine">'+h.hint+'</p></article>';
+}
+function viewHealth(){
+  const d=getDay(ui.date);
+  return dateBar()+(d&&d.src&&d.src.health?'<p class="fine">Readings imported from '+esc(d.src.health)+'.</p>':'')+
+   '<div class="grid3">'+HEALTH.map(tileHTML).join('')+'</div>'+
+   '<p class="hint">These are general adult ranges, not a diagnosis. Talk to a doctor about readings that worry you or that stay outside range. Each line shows the 7 days ending on the date above.</p>'+sourcePanelHTML();
+}
+function updateTile(id){
+  const h=HEALTH.find(x=>x.id===id),el=$('[data-tile="'+id+'"]',$('#view'));
+  if(!h||!el||!el.classList.contains('tile'))return;
+  const vis=tileVis(h);
+  el.querySelector('[data-chip]').innerHTML=vis.chip;el.querySelector('[data-spark]').innerHTML=vis.spark;
+}
+
+/* ================= PROGRESS ================= */
+function recentMealsText(){
+  const t=todayStr(),seen={},out=[];
+  for(let i=0;i<7&&out.length<14;i++){
+    const d=S.days[addDays(t,-i)];if(!d)continue;
+    SLOTS.forEach(s=>{const m=d.meals&&d.meals[s[0]];if(!m||!(m.kcal>0))return;const nm=(m.dish||m.desc||'unnamed meal');const key=s[1]+nm;if(seen[key]||out.length>=14)return;seen[key]=1;out.push('- '+s[1]+': '+nm+' ('+Math.round(m.kcal)+' kcal)')});
+  }
+  return out.join('\n')||'- (no meals described)';
+}
+function recentWorkoutsText(){
+  const t=todayStr(),agg={};
+  for(let i=0;i<7;i++){const d=S.days[addDays(t,-i)];(d&&d.workouts||[]).forEach(w=>{agg[w.type]=(agg[w.type]||0)+(w.minutes||0)})}
+  const k=Object.keys(agg);
+  return k.length?k.map(x=>x+' '+agg[x]+' min').join(', ')+' in the last 7 days':'none logged in the last 7 days';
+}
+function advicePrompt(pr){
+  const p=S.settings.profile,t=S.settings.target,ti=pr.ti,a=pr.avg,lose=ti.dir==='lose';
+  const eq=(type,min)=>Math.round(workoutKcal({type,minutes:min,intensity:'moderate'},p));
+  const gap=pr.gap==null?0:Math.max(0,pr.gap);
+  return 'You are a careful, practical fitness and nutrition coach inside a tracking app. Be specific and kind. Reply with only one JSON object and no other text.\n\n'+
+   'Person: '+p.gender+', '+p.age+' years, '+p.height+' cm, '+p.weight+' kg, BMI '+nf(bmi(p),1)+', BMR '+Math.round(bmr(p))+' kcal per day.\n'+
+   'Goal: '+(lose?'lose':'gain')+' '+nf(Math.abs(ti.diff),1)+' kg to reach '+t.weight+' kg by '+ti.deadline+' ('+Math.max(ti.remaining,0)+' days left). That needs about '+(isFinite(ti.reqPerDay)?Math.round(ti.reqPerDay):'an unknown number of')+' kcal per day '+(lose?'deficit':'surplus')+', roughly '+(isFinite(ti.reqRate)?nf(ti.reqRate,2):'?')+' kg per week.\n'+
+   'Recent pace (average of '+pr.n+' logged day'+(pr.n===1?'':'s')+'): eaten '+Math.round(a.intake)+' kcal, BMR '+Math.round(a.bmr)+', activity burn '+Math.round(a.active)+' kcal, about '+Math.round(a.steps)+' steps a day. Net '+Math.abs(Math.round(a.balance))+' kcal per day '+(a.balance>=0?'deficit':'surplus')+'.\n'+
+   'Shortfall to close: '+Math.round(gap)+' kcal per day.\n'+
+   'Energy equivalents for this person: 1,000 extra steps about '+Math.round(stepKcal(1000,p))+' kcal; 30 minutes brisk walking about '+eq('Walking (brisk)',30)+'; 30 minutes cycling about '+eq('Cycling',30)+'; 30 minutes jogging about '+eq('Jogging',30)+'; 30 minutes strength training about '+eq('Strength training',30)+'.\n'+
+   'Recent meals:\n'+recentMealsText()+'\nRecent workouts: '+recentWorkoutsText()+'.\n\n'+
+   'Limits: never suggest eating below '+ti.floor+' kcal a day; keep '+(lose?'loss':'gain')+' at or under '+nf(ti.maxRate,1)+' kg per week; suggest at most 90 minutes of extra exercise a day.\n'+
+   'Task: '+(pr.status==='ontrack'?'The person is on track. Give 3 short tips to stay on pace (kcalPerDay 0 for each).':'Give 3 options that each close the shortfall. Option 1 is mostly activity, option 2 is mostly changes to meals (base swaps on the recent meals above, regional foods are fine), option 3 is a balanced mix. kcalPerDay is the total daily effect of that option and should cover at least 80 percent of the shortfall. Use concrete numbers such as steps, minutes and portion swaps. If the deadline is unrealistic at a safe rate, set verdict to "unrealistic" and in dateAdvice propose a realistic new date (about '+addDays(todayStr(),ti.realisticDays)+') and what to do until then.')+'\n'+
+   'Each "how" item is under 22 words, 2 to 4 per option.\n'+
+   'JSON shape: {"headline":"under 14 words","verdict":"on_track or behind or unrealistic","options":[{"title":"short","kind":"activity or meals or both","kcalPerDay":0,"how":["..."]}],"dateAdvice":"text or null","caution":"text or null"}';
+}
+function cleanAdvice(r){
+  if(!r||typeof r!=='object'||!Array.isArray(r.options))throw {code:'invalid_json'};
+  const opts=r.options.slice(0,4).map(o=>({title:String(o&&o.title||'').slice(0,80),kind:['activity','meals','both'].indexOf(o&&o.kind)>=0?o.kind:'both',kcal:Number.isFinite(Number(o&&o.kcalPerDay))?Math.round(Number(o.kcalPerDay)):0,how:(Array.isArray(o&&o.how)?o.how:[]).slice(0,5).map(x=>String(x).slice(0,220))})).filter(o=>o.title&&o.how.length);
+  if(!opts.length)throw {code:'invalid_json'};
+  return {headline:String(r.headline||'').slice(0,140),verdict:['on_track','behind','unrealistic'].indexOf(r.verdict)>=0?r.verdict:'behind',options:opts,dateAdvice:r.dateAdvice&&r.dateAdvice!=='null'?String(r.dateAdvice).slice(0,400):'',caution:r.caution&&r.caution!=='null'?String(r.caution).slice(0,400):''};
+}
+function adviceHTML(pr){
+  const a=S.settings.advice,st=ui.advice;
+  let btn='';
+  if(pr.status==='nodata')return '<p class="lead">Log meals for a few days (at least three meals a day on at least one day) and ideas for reaching your target will appear here.</p>';
+  if(pr.status==='reached')return '<p class="lead">You are at your target weight. Keep your calories near your burn to stay there.</p>';
+  if(!AI.sample)return aiOffHTML();
+  const label=pr.status==='ontrack'?'Tips to stay on track':'Suggest ways to hit my target';
+  btn='<div class="row"><button class="btn" data-act="advice"'+(st.busy?' disabled':'')+'>'+(a?'Refresh suggestions':label)+'</button>'+(st.busy?'<button class="btn ghost" data-act="stopAdvice">Stop</button>':'')+'</div>';
+  let body='';
+  if(st.busy)body='<p class="status"><span class="spin"></span>Working out options from your logs…</p>';
+  else if(st.msg)body='<p class="status err">'+esc(st.msg)+'</p>';
+  if(a&&!st.busy){
+    body+='<div class="stack"><div class="row">'+chip(a.verdict==='on_track'?'good':a.verdict==='unrealistic'?'bad':'warn',a.verdict==='on_track'?'On track':a.verdict==='unrealistic'?'Tough in this time':'Needs adjusting')+'<span class="fine">Generated '+esc(new Date(a.at).toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))+' from '+a.n+' logged day'+(a.n===1?'':'s')+'</span></div>'+(a.headline?'<h3>'+esc(a.headline)+'</h3>':'')+'</div>'+
+      '<div class="opts">'+a.options.map(o=>'<article class="opt"><div class="row between"><span class="lbl">'+({activity:'Activity',meals:'Meals',both:'Activity and meals'})[o.kind]+'</span>'+(o.kcal>0?'<span class="fine">about '+nf(o.kcal)+' kcal a day</span>':'')+'</div><h3>'+esc(o.title)+'</h3><ul>'+o.how.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></article>').join('')+'</div>'+
+      (a.dateAdvice?'<p class="note">'+esc(a.dateAdvice)+'</p>':'')+(a.caution?'<p class="note plain">'+esc(a.caution)+'</p>':'')+
+      '<p class="fine">AI suggestions are general guidance based on your logged numbers, not medical advice. Check with a doctor before big changes, especially with a health condition.</p>';
+  }
+  return btn+body;
+}
+function viewProgress(){
+  const p=S.settings.profile;
+  if(!profileOK(p))return needProfile();
+  if(!targetOK())return '<section class="card"><h2>Set your target</h2><p class="lead">Enter a target weight and how long you want to take, and Progress will track your pace against it.</p><div><button class="btn" data-act="tab" data-tab="target">Open target</button></div></section>';
+  const today=todayStr(),c=calcDay(today),pr=projection(),ti=pr.ti;
+  const mx=Math.max(c.intake,c.burn,1),pct=v=>(v/mx*100).toFixed(1)+'%';
+  const gain=ti.dir==='gain';
+  /* ledger */
+  let ledger='<section class="card"><span class="lbl">Today so far · '+esc(shortDate(today))+'</span>';
+  if(c.intake>0){
+    ledger+='<div class="hero-row"><span class="big">'+nf(Math.abs(c.balance))+'</span><span class="u" style="margin:0">kcal '+(c.balance>=0?'deficit':'surplus')+'</span></div>'+
+      '<p class="hint">Burned minus eaten. '+c.slotsLogged+' of 6 meals logged'+(c.slotsLogged<5?', so this will shrink as you eat.':'.')+'</p>';
+  }else ledger+='<div class="hero-row"><span class="big">–</span></div><p class="hint">Log what you ate in Meals and your deficit shows here.</p>';
+  ledger+='<div class="bars"><div class="bar-row"><span class="name"><i class="dot in"></i>Eaten</span><div class="track"><div class="seg-in" style="width:'+pct(c.intake)+'"></div></div><span class="val">'+nf(c.intake)+'</span></div>'+
+    '<div class="bar-row"><span class="name"><i class="dot out"></i>Burned</span><div class="track"><div class="seg-bmr" style="width:'+pct(c.bmr)+'"></div>'+(c.active>0?'<div class="seg-act" style="width:'+pct(c.active)+'"></div>':'')+'</div><span class="val">'+nf(c.burn)+'</span></div></div>'+
+    '<div class="parts"><span><i class="dot bmr"></i>BMR '+nf(c.bmr)+'</span><span><i class="dot out"></i>Steps '+nf(c.stepK)+'</span><span><i class="dot out"></i>Workouts '+nf(c.workK)+'</span></div></section>';
+  /* pace */
+  const sc=STATUS_CHIP[pr.status];
+  let pace='<section class="card"><div class="row between"><span class="lbl">Path to '+nf(S.settings.target.weight,1)+' kg</span>'+chip(sc[0],sc[1])+'</div>';
+  if(pr.status==='nodata'){
+    pace+='<p class="lead">Log a day of meals to see how long your target will take at your real pace.</p>';
+  }else if(pr.status==='reached'){
+    pace+='<p class="lead">You are at your target weight.</p>';
+  }else{
+    let vt='';
+    if(pr.status==='stalled')vt='At your current calorie balance you are not moving toward '+nf(S.settings.target.weight,1)+' kg. '+(gain?'Your recent days sit at or below your burn.':'Your recent days sit at or above your burn.');
+    else if(pr.status==='overdue')vt='The deadline of '+fullDate(ti.deadline)+' has passed. At your recent pace you would reach '+nf(S.settings.target.weight,1)+' kg around '+fullDate(pr.estDate)+'.';
+    else if(pr.status==='ontrack')vt='At your recent pace you reach '+nf(S.settings.target.weight,1)+' kg around '+fullDate(pr.estDate)+', ahead of your '+fullDate(ti.deadline)+' deadline.';
+    else vt='At your recent pace you reach '+nf(S.settings.target.weight,1)+' kg around '+fullDate(pr.estDate)+', about '+nf(pr.estDays-ti.remaining)+' days after your '+fullDate(ti.deadline)+' deadline.';
+    pace+='<p style="font:600 22px/1.25 var(--font-display);letter-spacing:.01em;max-width:34ch">'+esc(vt)+'</p>';
+    const ratio=isFinite(ti.reqPerDay)&&ti.reqPerDay>0?clamp(pr.eff/ti.reqPerDay,0,1):0;
+    pace+='<div class="pair"><div><span class="lbl">You need</span><div class="mid">'+(isFinite(ti.reqPerDay)?nf(ti.reqPerDay):'–')+'<span class="u">kcal/day</span></div></div><div><span class="lbl">You average</span><div class="mid">'+nf(Math.max(pr.eff,0))+'<span class="u">kcal/day</span></div></div></div>'+
+      '<div class="meter'+(ratio>=1?'':' warn')+'" role="img" aria-label="'+Math.round(ratio*100)+' percent of the needed daily '+(gain?'surplus':'deficit')+'"><span style="width:'+(ratio*100)+'%"></span></div>'+
+      '<p class="fine">Based on '+(pr.prov?'today so far (provisional)':pr.n+' logged day'+(pr.n===1?'':'s')+' of the last 7')+'. Counts burn as BMR plus logged steps and workouts, and '+(gain?'surplus':'deficit')+' as 7,700 kcal per kg.</p>';
+    if(isFinite(ti.reqRate)&&ti.reqRate>ti.maxRate)pace+='<p class="note">Your target needs about '+nf(ti.reqRate,2)+' kg a week, more than the usual '+nf(ti.maxRate,1)+' kg. A steadier finish is around '+esc(fullDate(addDays(today,ti.realisticDays)))+'.</p>';
+  }
+  pace+='</section>';
+  const chart='<section class="card"><div class="row between"><div><h3>Last 7 days</h3><p class="fine">Calories eaten next to calories burned. Taller teal than amber means a deficit.</p></div></div>'+chartHTML()+'</section>';
+  const adv='<section class="card" id="advice"><div><h3>'+(pr.status==='ontrack'?'Staying on track':'Closing the gap')+'</h3><p class="hint" style="margin-top:4px">Claude looks at your meals, activity and target and suggests changes to your meals, your movement or both.</p></div><div class="stack" id="advice-body">'+adviceHTML(pr)+'</div></section>';
+  return '<div class="split"><div class="stack" style="gap:16px">'+ledger+pace+'</div><div class="stack" style="gap:16px;min-width:0">'+chart+'</div></div>'+adv;
+}
+async function getAdvice(){
+  const pr=projection();
+  if(!AI.sample||!pr.avg)return;
+  const ctl=new AbortController();
+  ui.advice={busy:true,msg:'',ctl};
+  const paint=()=>{const el=$('#advice-body');if(el&&ui.tab==='progress')el.innerHTML=adviceHTML(projection())};
+  paint();
+  try{
+    const raw=await AI.sample.json(advicePrompt(pr),{signal:ctl.signal,modelTier:'default',cache:{gcTime:300000,refresh:true}});
+    const r=cleanAdvice(raw);
+    r.at=new Date().toISOString();r.n=pr.n;
+    S.settings.advice=r;queueSave('settings');
+    ui.advice={busy:false,msg:''};
+  }catch(e){ui.advice={busy:false,msg:(e&&e.code==='cancelled')?'':aiErrorText(e)}}
+  paint();
+}
+
+/* ================= SETTINGS (AI key) ================= */
+const maskKey=k=>k.length>14?k.slice(0,7)+'…'+k.slice(-4):'saved';
+function viewSettings(){
+  const key=getKey(),model=getModel();
+  return '<div class="grid2"><section class="card"><h2>AI setup</h2>'+
+   '<p class="lead">Meal photo analysis and the target suggestions use Claude through the Anthropic API. Paste your own API key to turn them on. Usage is billed to your Anthropic account.</p>'+
+   (key?'<p class="note plain">A key is saved on this phone ('+esc(maskKey(key))+'). Paste a new one below to replace it.</p>':'<p class="note">No key yet, so AI estimates are off. Everything else works without one.</p>')+
+   '<label class="field"><span class="lbl">Anthropic API key</span><input class="txt" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"></label>'+
+   '<label class="field"><span class="lbl">Model</span><input class="txt" id="apiModel" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="'+esc(model)+'"></label>'+
+   '<div class="row"><button class="btn" data-act="saveKey">Save</button><button class="btn ghost" data-act="testKey"'+(key?'':' disabled')+'>Test connection</button>'+(key?'<button class="btn link" data-act="removeKey">Remove key</button>':'')+'</div>'+
+   '<p class="status" id="aiMsg" aria-live="polite"></p></section>'+
+   '<section class="card"><h3>Privacy</h3><p class="lead">Your profile, meals, activity and health readings stay in this app on your phone. The key is kept in the app\u2019s private storage. When you analyze a meal, the photo and your description go straight from your phone to Anthropic. Nothing passes through any other server.</p><p class="hint">Create a key in the Claude Console. The Claude docs at docs.claude.com explain how.</p></section></div>';
+}
+window.__androidBack=function(){if(ui.tab!=='progress'){setTab('progress');return true}return false};
+
+/* ================= import ================= */
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===','){row.push(cur);cur=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]}
+    else cur+=ch;
+  }
+  row.push(cur);if(row.some(x=>x.trim()!==''))rows.push(row);
+  if(rows.length<2)return [];
+  const head=rows[0].map(h=>h.trim().toLowerCase().replace(/[\s-]+/g,'_'));
+  return rows.slice(1).map(r=>{const o={};head.forEach((h,i)=>{o[h]=(r[i]||'').trim()});return o});
+}
+function normDate(v){
+  v=String(v||'').trim();let m;
+  if((m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+  if((m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)))return m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]);
+  return '';
+}
+async function importFile(file){
+  const src=S.settings.source;
+  try{
+    const text=await file.text();let rows;
+    const tr=text.trim();
+    if(tr[0]==='['||tr[0]==='{'){const j=JSON.parse(tr);rows=(Array.isArray(j)?j:(j.days||j.data||[j])).map(o=>{const x={};Object.keys(o).forEach(k=>{x[k.toLowerCase().replace(/[\s-]+/g,'_')]=o[k]});return x})}
+    else rows=parseCSV(text);
+    const pick=(o,names)=>{for(const n of names){if(o[n]!==undefined&&o[n]!==''&&o[n]!==null){const v=Number(o[n]);if(Number.isFinite(v))return v}}return null};
+    let count=0;const today=todayStr();
+    rows.forEach(o=>{
+      const ds=normDate(o.date||o.day);if(!ds||ds>today)return;
+      const d=getDay(ds,true);d.sample=false;let any=false;
+      const steps=pick(o,['steps','step_count']);if(steps!=null){d.steps=Math.round(steps);d.src.activity=src;any=true}
+      d.workouts=d.workouts.filter(w=>!w.imported);
+      const mins=pick(o,['minutes','workout_minutes','duration_min']),cal=pick(o,['calories','calories_burned','active_calories']);
+      const name=String(o.workout||o.workout_type||o.activity||'').trim();
+      if((mins&&mins>0)||(cal&&cal>0)){
+        const type=Object.keys(MET).find(k=>k.toLowerCase()===name.toLowerCase())||(name?Object.keys(MET).find(k=>k.toLowerCase().indexOf(name.toLowerCase())===0)||'Other activity':'Other activity');
+        d.workouts.push({id:'im'+ds+Math.random().toString(36).slice(2,6),type,minutes:mins||0,intensity:'moderate',deviceKcal:cal>0?Math.round(cal):0,imported:true});d.src.activity=src;any=true;
+      }
+      [['sleep',['sleep_hours','sleep']],['stress',['stress']],['rhr',['resting_hr','resting_heart_rate']],['ahr',['avg_hr','heart_rate','average_heart_rate']],['spo2',['spo2']],['hrv',['hrv']],['sys',['systolic']],['dia',['diastolic']]].forEach(x=>{const v=pick(o,x[1]);if(v!=null){d.health[x[0]]=v;d.src.health=src;any=true}});
+      if(any){count++;queueSave('d_'+ds)}
+    });
+    ui.imp=count?'Imported '+count+' day'+(count===1?'':'s')+' from '+file.name+'.':'No usable rows found. Check that the file has a date column.';
+  }catch(e){ui.imp='That file could not be read. Use a CSV or a JSON list.'}
+  render(true);
+}
+
+/* ================= actions ================= */
+const ACT={
+  tab:b=>setTab(b.dataset.tab),
+  dayPrev:()=>{ui.date=addDays(ui.date,-1);render(true)},
+  dayNext:()=>{if(ui.date<todayStr()){ui.date=addDays(ui.date,1);render(true)}},
+  dayToday:()=>{ui.date=todayStr();render(true)},
+  clearSample:()=>{
+    Object.keys(S.days).forEach(k=>{if(S.days[k].sample){delete S.days[k];queueSave('d_'+k)}});
+    S.settings.advice=null;queueSave('settings');render(true);
+  },
+  cam:b=>{const s=b.closest('[data-slot]').dataset.slot;$('#fileCam').dataset.slot=s;$('#fileCam').value='';$('#fileCam').click()},
+  gal:b=>{const s=b.closest('[data-slot]').dataset.slot;$('#fileGal').dataset.slot=s;$('#fileGal').value='';$('#fileGal').click()},
+  analyze:b=>analyzeMeal(b.closest('[data-slot]').dataset.slot),
+  stopMeal:b=>{const s=b.closest('[data-slot]').dataset.slot,st=ui.meal[s];if(st&&st.ctl)st.ctl.abort()},
+  clearMeal:b=>{
+    const s=b.closest('[data-slot]').dataset.slot,d=getDay(ui.date);
+    if(d){delete d.meals[s];touch(ui.date)}
+    delete pending[s];ui.meal[s]={};refreshMeal(s);
+  },
+  water:b=>{const d=touch(ui.date),n=+b.dataset.n;d.water=(d.water===n)?n-1:n;const el=$('#water');if(el)el.innerHTML=waterHTML()},
+  waterStep:b=>{const d=touch(ui.date);d.water=clamp((d.water||0)+(+b.dataset.d),0,30);const el=$('#water');if(el)el.innerHTML=waterHTML()},
+  addWorkout:()=>{
+    const mins=num($('#woMin').value),kc=num($('#woKcal').value);
+    if(!(mins>0)&&!(kc>0)){$('#woMin').focus();return}
+    const d=touch(ui.date);
+    d.workouts.push({id:'w'+Date.now().toString(36),type:$('#woType').value,minutes:mins>0?mins:0,intensity:$('#woInt').value,deviceKcal:kc>0?Math.round(kc):0});
+    $('#woMin').value='';$('#woKcal').value='';
+    $('#wlist').innerHTML=workoutListHTML();$('#act-out').innerHTML=actOutHTML();
+  },
+  delWorkout:b=>{
+    const d=touch(ui.date);d.workouts=d.workouts.filter(w=>w.id!==b.dataset.id);
+    $('#wlist').innerHTML=workoutListHTML();$('#act-out').innerHTML=actOutHTML();
+  },
+  import:()=>{if(!S.settings.source)return;$('#fileImp').value='';$('#fileImp').click()},
+  advice:()=>getAdvice(),
+  stopAdvice:()=>{if(ui.advice.ctl)ui.advice.ctl.abort()},
+  saveKey:async()=>{
+    const k=($('#apiKey').value||'').trim(),m=($('#apiModel').value||'').trim()||'claude-sonnet-5-5',msg=$('#aiMsg');
+    if(k&&k.indexOf('sk-ant-')!==0){msg.className='status err';msg.textContent='That does not look like an Anthropic key. It should start with sk-ant-.';return}
+    lsSet('model',m);if(k)lsSet('apikey',k);
+    await setupAI();render(true);
+    const m2=$('#aiMsg');if(m2)m2.textContent=k?'Saved. AI estimates are on.':'Model saved.';
+  },
+  removeKey:async()=>{lsDel('apikey');await setupAI();render(true);const m=$('#aiMsg');if(m)m.textContent='Key removed.'},
+  testKey:async()=>{
+    const msg=$('#aiMsg');msg.className='status';msg.innerHTML='<span class="spin"></span>Checking…';
+    try{await callClaude('Reply with the single word OK.',{},16);msg.textContent='Connected. Your key works.'}
+    catch(e){msg.className='status err';msg.textContent=aiErrorText(e)}
+  }
+};
+const INPUT={
+  prof:t=>{const v=num(t.value);S.settings.profile[t.dataset.k]=Number.isFinite(v)?v:null;S.settings.mine=true;S.settings.advice=null;queueSave('settings');const o=$('#prof-out');if(o)o.innerHTML=profOutHTML()},
+  tgt:t=>{const v=num(t.value);S.settings.target[t.dataset.k]=Number.isFinite(v)?v:null;S.settings.mine=true;S.settings.advice=null;queueSave('settings');const o=$('#tgt-out');if(o)o.innerHTML=tgtOutHTML()},
+  kcal:t=>{
+    const slot=t.closest('[data-slot]').dataset.slot,v=num(t.value),d=touch(ui.date),m=d.meals[slot]||(d.meals[slot]={});
+    if(Number.isFinite(v)&&v>0)m.kcal=Math.round(v);else delete m.kcal;
+    const s=$('#meals-sum');if(s)s.innerHTML=summaryHTML();
+  },
+  desc:t=>{const slot=t.closest('[data-slot]').dataset.slot,d=touch(ui.date),m=d.meals[slot]||(d.meals[slot]={});m.desc=t.value},
+  steps:t=>{const v=num(t.value),d=touch(ui.date);d.steps=Number.isFinite(v)&&v>=0?Math.round(v):null;const o=$('#act-out');if(o)o.innerHTML=actOutHTML()},
+  health:t=>{
+    const d=touch(ui.date),v=num(t.value);
+    if(Number.isFinite(v))d.health[t.dataset.k]=v;else delete d.health[t.dataset.k];
+    updateTile(t.dataset.tile);
+  }
+};
+const CHANGE={
+  gender:t=>{S.settings.profile.gender=t.value;S.settings.mine=true;S.settings.advice=null;queueSave('settings');const o=$('#prof-out');if(o)o.innerHTML=profOutHTML()},
+  tgtunit:t=>{S.settings.target.unit=t.value;S.settings.mine=true;S.settings.advice=null;queueSave('settings');const o=$('#tgt-out');if(o)o.innerHTML=tgtOutHTML()},
+  tgtstart:t=>{if(t.value){S.settings.target.start=t.value;S.settings.mine=true;S.settings.advice=null;queueSave('settings');const o=$('#tgt-out');if(o)o.innerHTML=tgtOutHTML()}},
+  date:t=>{if(t.value&&t.value<=todayStr()){ui.date=t.value;render(true)}},
+  source:t=>{S.settings.source=t.value;queueSave('settings');const el=$('#srcpanel');if(el)el.outerHTML=sourcePanelHTML()},
+  tab:()=>{}
+};
+const view=$('#view');
+view.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b,e)});
+view.addEventListener('input',e=>{const t=e.target,f=t.dataset&&t.dataset.in&&INPUT[t.dataset.in];if(f)f(t,e)});
+view.addEventListener('change',e=>{const t=e.target,f=t.dataset&&t.dataset.ch&&CHANGE[t.dataset.ch];if(f)f(t,e)});
+$('#fileCam').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)onPhoto(f,e.target.dataset.slot)});
+$('#fileGal').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)onPhoto(f,e.target.dataset.slot)});
+$('#fileImp').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)importFile(f)});
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)setTab(b.dataset.tab)});
+document.addEventListener('toggle',e=>{if(e.target.id==='tbl')ui.chartTable=e.target.open},true);
+
+/* ================= routing ================= */
+const VIEWS={progress:viewProgress,profile:viewProfile,target:viewTarget,meals:viewMeals,activity:viewActivity,health:viewHealth,settings:viewSettings};
+function setTab(t){
+  if(!VIEWS[t])return;
+  ui.tab=t;
+  try{history.replaceState(null,'','#'+t)}catch(e){try{location.hash=t}catch(e2){}}
+  render(false);window.scrollTo(0,0);
+}
+function render(keep){
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===ui.tab)));
+  const y=window.scrollY;
+  try{view.innerHTML=banner()+VIEWS[ui.tab]()}
+  catch(e){view.innerHTML='<section class="card"><h2>Something went wrong</h2><p class="lead">This tab could not be drawn. Try another tab and come back.</p></section>';if(window.console)console.error(e)}
+  hideTip();
+  if(keep)window.scrollTo(0,y);
+}
+
+/* ================= boot ================= */
+async function boot(){
+  try{const h=(location.hash||'').replace('#','');if(VIEWS[h])ui.tab=h}catch(e){}
+  await initStore();
+  const loaded=await loadAll();
+  const fresh=!loaded.settings&&!Object.keys(loaded.days).length;
+  const def=defaultSettings();
+  S={settings:Object.assign({},def,loaded.settings||{}),days:loaded.days};
+  S.settings.profile=Object.assign({},def.profile,S.settings.profile||{});
+  S.settings.target=Object.assign({},def.target,S.settings.target||{});
+  if(fresh){
+    S.days=seedSample();
+    queueSave('settings');Object.keys(S.days).forEach(k=>queueSave('d_'+k));
+  }
+  setStatus(store.mode==='memory'?'memory':'');
+  await setupAI();
+  render(false);
+}
+boot();
+})();
+</script>
+</body>
+</html>
